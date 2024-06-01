@@ -163,11 +163,17 @@ public class MainActivity extends AppCompatActivity {
         stayButton.setEnabled(true);
         linearLayout.removeAllViews();
         linearLayout2.removeAllViews();
+        userBusted = false;
+        userStayed = false;
+        userHitBlackjack = false;
+        dealerHitBlackjack = false;
+        dealerStays = false;
         userCardsValues.clear();
         cardsImagesUrls.clear();
         dealersCardImages.clear();
         dealersCardValues.clear();
         totalValueTextView.setText("");
+        RoundDecider.setText(" ");
         cardsValue.setText("");
         dealersMove.setText("");
         Uri.Builder builder = Uri.parse(deckOfCardUrlApi).buildUpon();
@@ -603,7 +609,7 @@ public class MainActivity extends AppCompatActivity {
                         // Code to execute after the delay
                         hitDealerDownload(deckId);
                     }
-                }, 1000); // 3000 milliseconds = 3 seconds
+                }, 1500); // 3000 milliseconds = 3 seconds
             }
 
                 //hitDealerDownload(deckId);
