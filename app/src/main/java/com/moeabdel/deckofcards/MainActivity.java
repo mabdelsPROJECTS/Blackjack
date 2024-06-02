@@ -84,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
     private Button stayButton;
     private boolean dealerHitBlackjack = false;
     private boolean dealerStays = false;
+    private boolean enabledNextRoundButton = false;
      private static final String TAG = "MainActivity";
 
     @Override
@@ -168,6 +169,7 @@ public class MainActivity extends AppCompatActivity {
         userHitBlackjack = false;
         dealerHitBlackjack = false;
         dealerStays = false;
+        enabledNextRoundButton = false;
         userCardsValues.clear();
         cardsImagesUrls.clear();
         dealersCardImages.clear();
@@ -212,13 +214,19 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void updateYouValue(){
-        startingEditTextValueYou++;
-        you.setText("" + startingEditTextValueYou);
+    private void updateYouValue(int numbone, int numbtwo){
+        //startingEditTextValueYou++;
+        String temp = you.getText().toString();
+        int firstValue = Integer.parseInt(temp);
+        int total = (numbone + numbtwo) + firstValue;
+        you.setText("" + total);
     }
-    private void updateDealerValue(){
-        startingEditTextValueDealer++;
-        dealer.setText("" + startingEditTextValueDealer);
+    private void updateDealerValue(int numbOne, int numbTwo){
+        //startingEditTextValueDealer++;
+        String temp = dealer.getText().toString();
+        int firstValue = Integer.parseInt(temp);
+        int total = (numbOne + numbTwo) + firstValue;
+        dealer.setText("" + total);
     }
 
     private String parseStartJson(String s) {
@@ -402,9 +410,10 @@ public class MainActivity extends AppCompatActivity {
                                     if (value != 21) {
                                         dealersMove.setText("You Hit Blackjack");
                                         displayDealersCards();
-                                        updateYouValue();
+                                        updateYouValue(userCardsValues.size(), dealersCardValues.size());
                                         hitButton.setEnabled(false);
                                         stayButton.setEnabled(false);
+                                        enabledNextRoundButton = true;
                                     }
                                     else if( value == 21){
                                         dealersMove.setText("Both You And The Dealer Hit Blackjack");
@@ -467,8 +476,9 @@ public class MainActivity extends AppCompatActivity {
                 displayDealersCards();
                 userBusted = true;
                 //dealerMove();
-                updateDealerValue();
+                updateDealerValue(userCardsValues.size(), dealersCardValues.size());
                 //dealersMove.setText("Dealer Won");
+                enabledNextRoundButton = true;
             }
             else if(newValue == 21){
                 userHitBlackjack = true;
@@ -497,87 +507,91 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void goToNextRound(View v) {
-        if (hitNewDeck) {
-            getAFullNewDeck();
-            hitNewDeck = false;
-        } else if (!hitNewDeck) {
-            hitButton.setEnabled(true);
-            stayButton.setEnabled(true);
-            int remainingCards = Integer.parseInt(remaining);
-            if (remainingCards >= 4) {
-                if (!cardsImagesUrls.isEmpty() && !userCardsValues.isEmpty() &&
-                        !dealersCardValues.isEmpty() && !dealersCardImages.isEmpty()) {
-                    cardsImagesUrls.clear();
-                    userCardsValues.clear();
-                    dealersCardImages.clear();
-                    dealersCardValues.clear();
-                    linearLayout.removeAllViews();
-                    linearLayout2.removeAllViews();
-                    totalValueTextView.setText("");
-                    cardsValue.setText("");
-                    dealersMove.setText("");
-                    userBusted = false;
-                    userStayed = false;
-                    userHitBlackjack = false;
-                    dealerHitBlackjack = false;
-                    dealerStays = false;
-                    RoundDecider.setText(" ");
-                }
-                Uri.Builder urlBuilder = Uri.parse(deckOfCardUrlApi).buildUpon();
-                urlBuilder.appendPath(deckId);
-                urlBuilder.appendPath("draw");
-                urlBuilder.appendQueryParameter("count", "4");
+        if (!enabledNextRoundButton) {
+            // Do Nothing Here
+        } else {
+            if (hitNewDeck) {
+                getAFullNewDeck();
+                hitNewDeck = false;
+            } else if (!hitNewDeck) {
+                hitButton.setEnabled(true);
+                stayButton.setEnabled(true);
+                int remainingCards = Integer.parseInt(remaining);
+                if (remainingCards >= 4) {
+                    if (!cardsImagesUrls.isEmpty() && !userCardsValues.isEmpty() &&
+                            !dealersCardValues.isEmpty() && !dealersCardImages.isEmpty()) {
+                        cardsImagesUrls.clear();
+                        userCardsValues.clear();
+                        dealersCardImages.clear();
+                        dealersCardValues.clear();
+                        linearLayout.removeAllViews();
+                        linearLayout2.removeAllViews();
+                        totalValueTextView.setText("");
+                        cardsValue.setText("");
+                        dealersMove.setText("");
+                        userBusted = false;
+                        userStayed = false;
+                        userHitBlackjack = false;
+                        dealerHitBlackjack = false;
+                        dealerStays = false;
+                        RoundDecider.setText(" ");
+                        enabledNextRoundButton = false;
+                    }
+                    Uri.Builder urlBuilder = Uri.parse(deckOfCardUrlApi).buildUpon();
+                    urlBuilder.appendPath(deckId);
+                    urlBuilder.appendPath("draw");
+                    urlBuilder.appendQueryParameter("count", "4");
 
-                String url = urlBuilder.build().toString();
-                StringRequest getRequest = new StringRequest(Request.Method.GET, url,
-                        new Response.Listener<String>() {
-                            @Override
-                            public void onResponse(String response) {
-                                parseDrawACardJson(response);
-                                updateLinearLayout();
+                    String url = urlBuilder.build().toString();
+                    StringRequest getRequest = new StringRequest(Request.Method.GET, url,
+                            new Response.Listener<String>() {
+                                @Override
+                                public void onResponse(String response) {
+                                    parseDrawACardJson(response);
+                                    updateLinearLayout();
+
+                                }
+                            },
+                            new Response.ErrorListener() {
+
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+                                    Toast.makeText(MainActivity.this, "No More API Calls For 24 Hours", Toast.LENGTH_SHORT).show();
+                                    // Handle the error if needed
+                                }
+
 
                             }
-                        },
-                        new Response.ErrorListener() {
-
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-                                Toast.makeText(MainActivity.this, "No More API Calls For 24 Hours", Toast.LENGTH_SHORT).show();
-                                // Handle the error if needed
-                            }
+                    ) {
 
 
+                    };
+                    requestQueue.add(getRequest);
+                } else {
+                    // Toast.makeText(this, "There Arent Enough Cards In The Deck To Continue Playing", Toast.LENGTH_SHORT).show();
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setTitle("No Cards Remaining In This Deck");
+                    builder.setMessage("Use A New Deck Or Close The Application\nSelecting A New Deck Will Discard The Current Cards Held");
+                    builder.setCancelable(false);
+                    builder.setPositiveButton("New Deck", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            getAFullNewDeck();
                         }
-                ) {
-
-
-                };
-                requestQueue.add(getRequest);
-            } else {
-                // Toast.makeText(this, "There Arent Enough Cards In The Deck To Continue Playing", Toast.LENGTH_SHORT).show();
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("No Cards Remaining In This Deck");
-                builder.setMessage("Use A New Deck Or Close The Application\nSelecting A New Deck Will Discard The Current Cards Held");
-                builder.setCancelable(false);
-                builder.setPositiveButton("New Deck", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        getAFullNewDeck();
-                    }
-                });
-                builder.setNegativeButton("Close App", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        //finish();
-                        onDestroy();
-                    }
-                });
-                AlertDialog dialog = builder.create();
-                dialog.show();
+                    });
+                    builder.setNegativeButton("Close App", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            //finish();
+                            onDestroy();
+                        }
+                    });
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                }
             }
         }
     }
-
 
     private void dealerMove() {
         if (dealersCardValues.size() <= 2) {
@@ -594,10 +608,11 @@ public class MainActivity extends AppCompatActivity {
             } else if (cardValues[0] + cardValues[1] == 21) {
                 dealerHitBlackjack = true;
                 dealersMove.setText("Dealer Has Blackjack");
-                updateDealerValue();
+                updateDealerValue(userCardsValues.size(), dealersCardValues.size());
                 displayDealersNewCard();
                 hitButton.setEnabled(false);
                 stayButton.setEnabled(false);
+                enabledNextRoundButton = true;
             }
         }
         int totalDealersValue = 0;
@@ -631,8 +646,9 @@ public class MainActivity extends AppCompatActivity {
             else if ( dealerHitBlackjack){
                 dealersMove.setText("Dealer Hit Blackjack");
                 displayDealersCards();
-                updateDealerValue();
+                updateDealerValue(userCardsValues.size(), dealersCardValues.size());
                 RoundDecider.setText("You Lost");
+                enabledNextRoundButton = true;
             }
 
             }
@@ -717,12 +733,15 @@ public class MainActivity extends AppCompatActivity {
                 }
                 if (userNum > dealerNum) {
                     RoundDecider.setText("You Won");
-                    updateYouValue();
+                    updateYouValue(userCardsValues.size(), dealersCardValues.size());
+                    enabledNextRoundButton = true;
                 } else if (dealerNum > userNum) {
                     RoundDecider.setText("Dealer Won");
-                    updateDealerValue();
+                    updateDealerValue(userCardsValues.size(), dealersCardValues.size());
+                    enabledNextRoundButton = true;
                 } else {
                     RoundDecider.setText("Its A Tie");
+                    enabledNextRoundButton = true;
                 }
             }
 
@@ -753,6 +772,7 @@ public class MainActivity extends AppCompatActivity {
                 public void onClick(DialogInterface dialog, int which) {
                     displayDealersCards();
                     winnerBeforeNewDeck();
+                    enabledNextRoundButton = true;
                     //getAFullNewDeck();
                 }
             });
@@ -916,13 +936,15 @@ public class MainActivity extends AppCompatActivity {
                 dealersMove.setText("Dealer Hit Blackjack");
                 RoundDecider.setText("You Lost");
                 displayDealersCards();
-                updateDealerValue();
+                updateDealerValue(userCardsValues.size(), dealersCardValues.size());
                 dealerHitBlackjack = true;
+                enabledNextRoundButton = true;
             } else {
                 dealersMove.setText("Dealer Has 21");
                 RoundDecider.setText("You Lost");
                 displayDealersCards();
-                updateDealerValue();
+                updateDealerValue(userCardsValues.size(), dealersCardValues.size());
+                enabledNextRoundButton = true;
             }
         }
         else if (checkValue > 21) {
@@ -934,8 +956,9 @@ public class MainActivity extends AppCompatActivity {
                 dealersMove.setText("Dealer Has Busted With " + checkValue);
 
                 RoundDecider.setText("You Won");
-                updateYouValue();
+                updateYouValue(userCardsValues.size(), dealersCardValues.size());
                 displayDealersCards();
+                enabledNextRoundButton = true;
             }
         }
         else if ( checkValue < 21 && checkValue > 16){
@@ -961,12 +984,12 @@ public class MainActivity extends AppCompatActivity {
         }
         if(usersValuesInt <= 21 && dealersValuesInt <= 21){
             if(usersValuesInt > dealersValuesInt){
-                updateYouValue();
+                updateYouValue(userCardsValues.size(), dealersCardValues.size());
                 RoundDecider.setText("You Won");
                 dealersMove.setText("Dealer Has " + dealersValuesInt);
             }
             else if(dealersValuesInt > usersValuesInt){
-                updateDealerValue();
+                updateDealerValue(userCardsValues.size(), dealersCardValues.size());
                 RoundDecider.setText("Dealer Won");
                 dealersMove.setText("Dealer Has " + dealersValuesInt);
             }
