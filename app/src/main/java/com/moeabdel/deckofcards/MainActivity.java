@@ -336,7 +336,16 @@ public class MainActivity extends AppCompatActivity {
             ImageView dealersCardTwo = new ImageView(this);
             picasso.load(faceDownCard).into(dealersCardTwo);
             linearLayout2.addView(dealersCardOne);
-            linearLayout2.addView(dealersCardTwo);
+            Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    // Code to execute after the delay
+                    linearLayout2.addView(dealersCardTwo);
+                }
+            }, 500); // 3000 milliseconds = 3 seconds
+
+           // linearLayout2.addView(dealersCardTwo);
             getCardsTotalValue();
         }
 
@@ -615,7 +624,7 @@ public class MainActivity extends AppCompatActivity {
         }
         if (totalDealersValue > 16) {
             if ( !dealerHitBlackjack) {
-                dealersMove.setText("Dealer Decides To Stay With DealerMove() " + totalDealersValue);
+                dealersMove.setText("Dealer Decides To Stay With  " + totalDealersValue);
                 displayDealersCards();
                 stayWinnerDetermine();
             }
