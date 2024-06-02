@@ -582,8 +582,7 @@ public class MainActivity extends AppCompatActivity {
                 String nonChangedCardValue = String.valueOf(cardValues[1]);
                 dealersCardValues.add(changedCardValue);
                 dealersCardValues.add(nonChangedCardValue);
-            }
-            else if(cardValues[0] + cardValues[1] ==21){
+            } else if (cardValues[0] + cardValues[1] == 21) {
                 dealerHitBlackjack = true;
                 dealersMove.setText("Dealer Has Blackjack");
                 updateDealerValue();
@@ -599,7 +598,7 @@ public class MainActivity extends AppCompatActivity {
                 totalDealersValue = totalDealersValue + cardsValueInt;
 
             }
-            if (totalDealersValue <= 16){
+            if (totalDealersValue <= 16) {
                 dealersMove.setText("Dealer Decides To Hit");
                 displayDealersNewCard();
                 Handler handler = new Handler();
@@ -612,16 +611,24 @@ public class MainActivity extends AppCompatActivity {
                 }, 1500); // 3000 milliseconds = 3 seconds
             }
 
-                //hitDealerDownload(deckId);
-            }
-            if(totalDealersValue > 16){
-                dealerStays = true;
-            }
-            if(dealerStays) {
-                dealersMove.setText("Dealer Decides To Stay With " + totalDealersValue);
+            //hitDealerDownload(deckId);
+        }
+        if (totalDealersValue > 16) {
+            if ( !dealerHitBlackjack) {
+                dealersMove.setText("Dealer Decides To Stay With DealerMove() " + totalDealersValue);
                 displayDealersCards();
                 stayWinnerDetermine();
             }
+            else if ( dealerHitBlackjack){
+                dealersMove.setText("Dealer Hit Blackjack");
+                displayDealersCards();
+                updateDealerValue();
+                RoundDecider.setText("You Lost");
+            }
+
+            }
+        }
+
             //Log.d(TAG, "totalDealersValue: " + totalDealersValue);
 
             //Log.d(TAG, "totalDealersValue: " + totalDealersValue);
@@ -683,7 +690,7 @@ public class MainActivity extends AppCompatActivity {
                   //  updateYouValue();
                // }
                // displayDealersCards();
-           }
+
 
 
 
@@ -895,19 +902,32 @@ public class MainActivity extends AppCompatActivity {
             int valueInt = Integer.parseInt(value);
             checkValue += valueInt;
         }
-        if( checkValue == 21){
-            dealersMove.setText("Dealer Hit Blackjack");
-
-            RoundDecider.setText("You Lost");
-            displayDealersCards();
-            updateDealerValue();
+        if( checkValue == 21 ) {
+            if (dealersCardValues.size() == 2) {
+                dealersMove.setText("Dealer Hit Blackjack");
+                RoundDecider.setText("You Lost");
+                displayDealersCards();
+                updateDealerValue();
+                dealerHitBlackjack = true;
+            } else {
+                dealersMove.setText("Dealer Has 21");
+                RoundDecider.setText("You Lost");
+                displayDealersCards();
+                updateDealerValue();
+            }
         }
-        else if (checkValue > 21){
-            dealersMove.setText("Dealer Has Busted With " + checkValue);
+        else if (checkValue > 21) {
+            if (dealersCardValues.contains("11")) {
+                dealersCardValues.remove("11");
+                dealersCardValues.add("1");
+                dealerMove();
+            } else {
+                dealersMove.setText("Dealer Has Busted With " + checkValue);
 
-            RoundDecider.setText("You Won");
-            updateYouValue();
-            displayDealersCards();
+                RoundDecider.setText("You Won");
+                updateYouValue();
+                displayDealersCards();
+            }
         }
         else if ( checkValue < 21 && checkValue > 16){
             dealersMove.setText("Dealer Decides to Stay With " + checkValue);
@@ -934,10 +954,12 @@ public class MainActivity extends AppCompatActivity {
             if(usersValuesInt > dealersValuesInt){
                 updateYouValue();
                 RoundDecider.setText("You Won");
+                dealersMove.setText("Dealer Has " + dealersValuesInt);
             }
             else if(dealersValuesInt > usersValuesInt){
                 updateDealerValue();
                 RoundDecider.setText("Dealer Won");
+                dealersMove.setText("Dealer Has " + dealersValuesInt);
             }
         }
         hitNewDeck = true;
