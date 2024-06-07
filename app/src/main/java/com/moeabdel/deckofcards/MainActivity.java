@@ -60,6 +60,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView dealersMove;
     private Picasso picasso;
     private RequestQueue requestQueue;
+    private TextView cardsAtStake;
+    private ImageView cardsAtStakeImage;
 
     private TextView cardsValue;
     private Button startButton;
@@ -84,7 +86,9 @@ public class MainActivity extends AppCompatActivity {
     private Button stayButton;
     private boolean dealerHitBlackjack = false;
     private boolean dealerStays = false;
+    private boolean isTied = false;
     private boolean enabledNextRoundButton = false;
+    private int allCardsAtStake;
      private static final String TAG = "MainActivity";
 
     @Override
@@ -110,6 +114,8 @@ public class MainActivity extends AppCompatActivity {
         stayButton = binding.stayButton;
         getANewDeck = binding.getANewDeckButton;
         RoundDecider = binding.RoundDecider;
+        cardsAtStake = binding.cardsAtStake;
+        cardsAtStakeImage = binding.CardsAtStakeImage;
         //horiScroll = binding.HoriScroll;
        // constraintLayout = binding.ConLayout;
         requestQueue = Volley.newRequestQueue(this);
@@ -219,6 +225,12 @@ public class MainActivity extends AppCompatActivity {
         String temp = you.getText().toString();
         int firstValue = Integer.parseInt(temp);
         int total = (numbone + numbtwo) + firstValue;
+        if(isTied){
+            total = (numbone + numbtwo) + (firstValue + allCardsAtStake);
+            isTied = false;
+            cardsAtStake.setVisibility(View.INVISIBLE);
+            cardsAtStakeImage.setVisibility(View.INVISIBLE);
+        }
         you.setText("" + total);
     }
     private void updateDealerValue(int numbOne, int numbTwo){
@@ -226,6 +238,12 @@ public class MainActivity extends AppCompatActivity {
         String temp = dealer.getText().toString();
         int firstValue = Integer.parseInt(temp);
         int total = (numbOne + numbTwo) + firstValue;
+        if(isTied){
+            total = (numbOne + numbTwo) + (firstValue + allCardsAtStake);
+            isTied = false;
+            cardsAtStake.setVisibility(View.INVISIBLE);
+            cardsAtStakeImage.setVisibility(View.INVISIBLE);
+        }
         dealer.setText("" + total);
     }
 
@@ -420,6 +438,7 @@ public class MainActivity extends AppCompatActivity {
                                         displayDealersCards();
                                         hitButton.setEnabled(false);
                                         stayButton.setEnabled(false);
+                                        enabledNextRoundButton = true;
                                     }
                                 }
                             }
@@ -608,7 +627,7 @@ public class MainActivity extends AppCompatActivity {
             } else if (cardValues[0] + cardValues[1] == 21) {
                 dealerHitBlackjack = true;
                 dealersMove.setText("Dealer Has Blackjack");
-                updateDealerValue(userCardsValues.size(), dealersCardValues.size());
+               // updateDealerValue(userCardsValues.size(), dealersCardValues.size());
                 displayDealersNewCard();
                 hitButton.setEnabled(false);
                 stayButton.setEnabled(false);
@@ -742,8 +761,20 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     RoundDecider.setText("Its A Tie");
                     enabledNextRoundButton = true;
+                    isTied = true;
+                    tiedState();
                 }
             }
+
+            public void tiedState(){
+            int dealersCards = dealersCardValues.size();
+            int usersCards = userCardsValues.size();
+             allCardsAtStake = dealersCards + usersCards;
+            cardsAtStake.setText(allCardsAtStake + " Cards At Stake");
+            cardsAtStake.setVisibility(View.VISIBLE);
+            cardsAtStakeImage.setVisibility(View.VISIBLE);
+            }
+
 
             
     public void hitPlayer(View v) {
