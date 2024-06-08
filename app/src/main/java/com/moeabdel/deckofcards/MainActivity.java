@@ -613,66 +613,84 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void dealerMove() {
-        if (dealersCardValues.size() <= 2) {
-            final String cardOneValue = dealersCardValues.get(0);
-            final String cardTwoValue = dealersCardValues.get(1);
-            final int[] cardValues = {Integer.parseInt(cardOneValue), Integer.parseInt(cardTwoValue)};
-            if (cardValues[0] + cardValues[1] > 21) {
-                cardValues[0] = 1;
-                dealersCardValues.clear();
-                String changedCardValue = String.valueOf(cardValues[0]);
-                String nonChangedCardValue = String.valueOf(cardValues[1]);
-                dealersCardValues.add(changedCardValue);
-                dealersCardValues.add(nonChangedCardValue);
-            } else if (cardValues[0] + cardValues[1] == 21) {
-                dealerHitBlackjack = true;
-                dealersMove.setText("Dealer Has Blackjack");
-               // updateDealerValue(userCardsValues.size(), dealersCardValues.size());
-                displayDealersNewCard();
-                hitButton.setEnabled(false);
-                stayButton.setEnabled(false);
-                enabledNextRoundButton = true;
-            }
-        }
-        int totalDealersValue = 0;
         if (!remaining.equals("0")) {
-            for (String cardsValue : dealersCardValues) {
-                int cardsValueInt = Integer.parseInt(cardsValue);
-                totalDealersValue = totalDealersValue + cardsValueInt;
+            if (dealersCardValues.size() <= 2) {
+                final String cardOneValue = dealersCardValues.get(0);
+                final String cardTwoValue = dealersCardValues.get(1);
+                final int[] cardValues = {Integer.parseInt(cardOneValue), Integer.parseInt(cardTwoValue)};
+                if (cardValues[0] + cardValues[1] > 21) {
+                    cardValues[0] = 1;
+                    dealersCardValues.clear();
+                    String changedCardValue = String.valueOf(cardValues[0]);
+                    String nonChangedCardValue = String.valueOf(cardValues[1]);
+                    dealersCardValues.add(changedCardValue);
+                    dealersCardValues.add(nonChangedCardValue);
+                } else if (cardValues[0] + cardValues[1] == 21) {
+                    dealerHitBlackjack = true;
+                    dealersMove.setText("Dealer Has Blackjack");
+                    // updateDealerValue(userCardsValues.size(), dealersCardValues.size());
+                    displayDealersNewCard();
+                    hitButton.setEnabled(false);
+                    stayButton.setEnabled(false);
+                    enabledNextRoundButton = true;
+                }
+            }
+            int totalDealersValue = 0;
+            if (!remaining.equals("0")) {
+                for (String cardsValue : dealersCardValues) {
+                    int cardsValueInt = Integer.parseInt(cardsValue);
+                    totalDealersValue = totalDealersValue + cardsValueInt;
+
+                }
+                if (totalDealersValue <= 16) {
+                    dealersMove.setText("Dealer Decides To Hit");
+                    displayDealersNewCard();
+                    Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            // Code to execute after the delay
+                            hitDealerDownload(deckId);
+                        }
+                    }, 1500); // 3000 milliseconds = 3 seconds
+                }
+
+                //hitDealerDownload(deckId);
+            }
+            if (totalDealersValue > 16) {
+                if (!dealerHitBlackjack) {
+                    dealersMove.setText("Dealer Decides To Stay With  " + totalDealersValue);
+                    displayDealersCards();
+                    stayWinnerDetermine();
+                } else if (dealerHitBlackjack) {
+                    dealersMove.setText("Dealer Hit Blackjack");
+                    displayDealersCards();
+                    updateDealerValue(userCardsValues.size(), dealersCardValues.size());
+                    RoundDecider.setText("You Lost");
+                    enabledNextRoundButton = true;
+                }
 
             }
-            if (totalDealersValue <= 16) {
-                dealersMove.setText("Dealer Decides To Hit");
-                displayDealersNewCard();
-                Handler handler = new Handler();
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        // Code to execute after the delay
-                        hitDealerDownload(deckId);
-                    }
-                }, 1500); // 3000 milliseconds = 3 seconds
-            }
+        } else if (remaining.equals("0")) {
+            Log.d(TAG, "Inside else if when dealer wants to hit with zero cards");
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("No Cards Remaining In This Deck");
+            builder.setMessage("Dealer attempted to hit with no cards left; hand outcome will be determined by existing cards");
+            builder.setCancelable(false);
 
-            //hitDealerDownload(deckId);
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    displayDealersCards();
+                    winnerBeforeNewDeck();
+                    enabledNextRoundButton = true;
+                    //getAFullNewDeck();
+                }
+            });
+            AlertDialog dialog = builder.create();
+            dialog.show();
         }
-        if (totalDealersValue > 16) {
-            if ( !dealerHitBlackjack) {
-                dealersMove.setText("Dealer Decides To Stay With  " + totalDealersValue);
-                displayDealersCards();
-                stayWinnerDetermine();
-            }
-            else if ( dealerHitBlackjack){
-                dealersMove.setText("Dealer Hit Blackjack");
-                displayDealersCards();
-                updateDealerValue(userCardsValues.size(), dealersCardValues.size());
-                RoundDecider.setText("You Lost");
-                enabledNextRoundButton = true;
-            }
-
-            }
-        }
-
+    }
             //Log.d(TAG, "totalDealersValue: " + totalDealersValue);
 
             //Log.d(TAG, "totalDealersValue: " + totalDealersValue);
@@ -761,20 +779,36 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     RoundDecider.setText("Its A Tie");
                     enabledNextRoundButton = true;
-                    isTied = true;
-                    tiedState();
+                    if (isTied) {
+                        tiedStateMoreThanOnce();
+                    } else {
+                        isTied = true;
+                        tiedState();
+                    }
                 }
             }
 
-            public void tiedState(){
-            int dealersCards = dealersCardValues.size();
-            int usersCards = userCardsValues.size();
-             allCardsAtStake = dealersCards + usersCards;
-            cardsAtStake.setText(allCardsAtStake + " Cards At Stake");
-            cardsAtStake.setVisibility(View.VISIBLE);
-            cardsAtStakeImage.setVisibility(View.VISIBLE);
+            public void tiedStateMoreThanOnce() {
+                if (isTied) {
+                    int dealersCards = dealersCardValues.size();
+                    int userCards = userCardsValues.size();
+                    allCardsAtStake = allCardsAtStake + (dealersCards + userCards);
+                    cardsAtStake.setText(allCardsAtStake + " Cards At Stake");
+                    cardsAtStake.setVisibility(View.VISIBLE);
+                    cardsAtStakeImage.setVisibility(View.VISIBLE);
+
+                }
+
             }
 
+            public void tiedState(){
+                int dealersCards = dealersCardValues.size();
+                int usersCards = userCardsValues.size();
+                allCardsAtStake = dealersCards + usersCards;
+                cardsAtStake.setText(allCardsAtStake + " Cards At Stake");
+                cardsAtStake.setVisibility(View.VISIBLE);
+                cardsAtStakeImage.setVisibility(View.VISIBLE);
+            }
 
             
     public void hitPlayer(View v) {
